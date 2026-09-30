@@ -1,4 +1,5 @@
 import { normalizeTarget } from '@/background/capture/normalizeTarget'
+import type { HandoffGuard } from '@/background/handoff/guard'
 import type { ChromiumInterceptionDeps } from '@/background/interception/chromium'
 import { pickDownloadUrl } from '@/background/interception/eligibility'
 import { describeUrlForLog, log } from '@/background/log'
@@ -18,7 +19,8 @@ export async function confirmInterceptedDownload(
   },
   config: TakeoverConfig,
   capturedWindow: Promise<number | null> | undefined,
-  deps: ChromiumInterceptionDeps
+  deps: ChromiumInterceptionDeps,
+  capturedGuard?: HandoffGuard
 ): Promise<void> {
   if (!deps.confirm) return
   const target = normalizeTarget({
@@ -42,7 +44,7 @@ export async function confirmInterceptedDownload(
     describeUrlForLog(target.url)
   )
   if (decision !== 'motrix') return
-  const guard = await deps.captureGuard()
+  const guard = capturedGuard ?? (await deps.captureGuard())
   if (!guard) return
   const windowId = await capturedWindow
   guard.assertCurrent()
